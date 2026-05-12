@@ -1,0 +1,289 @@
+openapi: 3.0.0
+info:
+  title: 珍奶價格觀察站 API
+  description: |
+    珍奶價格觀察站後端 API，提供珍奶價格紀錄的新增、查詢、刪除功能。
+    
+    # 功能說明
+    - **新增價格紀錄**：記錄特定日期的奶茶商品與價格
+    - **查詢價格紀錄**：支援關鍵字搜尋（商品名稱、日期）
+    - **刪除價格紀錄**：根據紀錄 ID 刪除
+    
+    # 資料格式
+    - 日期格式：YYYY-MM-DD（ISO 8601）
+    - 價格：整數（新台幣 NT$）
+    - 所有日期時間均採 UTC 時區
+  version: 1.0.0
+  contact:
+    name: 開發團隊
+    email: support@milktea-price.example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000
+    description: 本地開發環境
+  - url: https://api.milktea-price.example.com
+    description: 生產環境
+
+tags:
+  - name: 價格紀錄
+    description: 珍奶價格紀錄的相關操作
+
+paths:
+  /api/prices:
+    get:
+      tags:
+        - 價格紀錄
+      summary: 查詢價格紀錄列表
+      description: |
+        取得所有珍奶價格紀錄，支援關鍵字搜尋。
+        搜尋會比對商品名稱與日期欄位（模糊比對）。
+      operationId: getPrices
+      parameters:
+        - name: q
+          in: query
+          description: 搜尋關鍵字（可選），用於篩選商品名稱或日期
+          required: false
+          schema:
+            type: string
+            example: "珍珠奶茶"
+          examples:
+            byName:
+              summary: 按商品名稱搜尋
+              value: "珍珠奶茶"
+            byDate:
+              summary: 按日期搜尋
+              value: "2026-05"
+      responses:
+        '200':
+          description: 成功取得價格紀錄列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PriceRecord'
+              examples:
+                successful:
+                  summary: 成功回傳多筆紀錄
+                  value:
+                    - id: 1
+                      date: "2026-05-13"
+                      name: "珍珠奶茶"
+                      price: 65
+                    - id: 2
+                      date: "2026-05-13"
+                      name: "布丁奶茶"
+                      price: 70
+                    - id: 3
+                      date: "2026-05-12"
+                      name: "珍珠奶茶"
+                      price: 65
+                empty:
+                  summary: 無搜尋結果
+                  value: []
+        '500':
+          description: 資料庫錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Database error"
+
+    post:
+      tags:
+        - 價格紀錄
+      summary: 新增價格紀錄
+      description: |
+        建立一筆新的珍奶價格紀錄。
+        
+        # 驗證規則
+        - `date`：必填，格式為 YYYY-MM-DD
+        - `name`：必填，商品名稱（非空字串）
+        - `price`：必填，非負整數（單位：新台幣 NT$）
+      operationId: createPrice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePriceRequest'
+            examples:
+              createPearl:
+                summary: 建立珍珠奶茶紀錄
+                value:
+                  date: "2026-05-13"
+                  name: "珍珠奶茶"
+                  price: 65
+              createPuddingTea:
+                summary: 建立布丁奶茶紀錄
+                value:
+                  date: "2026-05-13"
+                  name: "布丁奶茶"
+                  price: 70
+      responses:
+        '201':
+          description: 紀錄建立成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceRecord'
+              example:
+                id: 4
+                date: "2026-05-13"
+                name: "珍珠奶茶"
+                price: 65
+        '400':
+          description: 請求參數缺失或格式錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missingFields:
+                  summary: 缺少必填欄位
+                  value:
+                    error: "Missing required fields: date, name, price"
+                invalidFormat:
+                  summary: 格式不正確
+                  value:
+                    error: "Invalid date format, expected YYYY-MM-DD"
+        '500':
+          description: 資料庫錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Database error"
+
+  /api/prices/{id}:
+    delete:
+      tags:
+        - 價格紀錄
+      summary: 刪除價格紀錄
+      description: |
+        根據紀錄 ID 刪除一筆珍奶價格紀錄。
+        
+        # 注意事項
+        - 刪除後無法復原
+        - 如果 ID 不存在，仍回傳成功（冪等性）
+      operationId: deletePrice
+      parameters:
+        - name: id
+          in: path
+          description: 價格紀錄的唯一識別碼
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: 刪除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              example:
+                message: "刪除成功"
+        '500':
+          description: 資料庫錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Database error"
+
+components:
+  schemas:
+    PriceRecord:
+      type: object
+      description: 珍奶價格紀錄物件
+      required:
+        - id
+        - date
+        - name
+        - price
+      properties:
+        id:
+          type: integer
+          description: 紀錄的唯一識別碼（自動生成）
+          example: 1
+        date:
+          type: string
+          format: date
+          description: 紀錄日期（ISO 8601 格式）
+          example: "2026-05-13"
+        name:
+          type: string
+          description: 商品名稱
+          example: "珍珠奶茶"
+          minLength: 1
+          maxLength: 100
+        price:
+          type: integer
+          description: 價格（新台幣 NT$）
+          example: 65
+          minimum: 0
+
+    CreatePriceRequest:
+      type: object
+      description: 建立價格紀錄的請求體
+      required:
+        - date
+        - name
+        - price
+      properties:
+        date:
+          type: string
+          format: date
+          description: 紀錄日期（YYYY-MM-DD 格式）
+          example: "2026-05-13"
+        name:
+          type: string
+          description: 商品名稱
+          example: "珍珠奶茶"
+          minLength: 1
+          maxLength: 100
+        price:
+          type: integer
+          description: 價格（新台幣 NT$）
+          example: 65
+          minimum: 0
+
+    SuccessResponse:
+      type: object
+      description: 成功回應體
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: 操作成功訊息
+          example: "刪除成功"
+
+    ErrorResponse:
+      type: object
+      description: 錯誤回應體
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: 錯誤訊息
+          example: "Database error"
+
+  securitySchemes:
+    # 預留：未來可加入身份驗證
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token (planned for future)
+
+# 預留：未來若需要身份驗證
+# security:
+#   - BearerAuth: []

@@ -1,0 +1,5 @@
+name: add-express-sqlite-backend
+title: Add Express + SQLite backend for prices API
+version: 0.1.0
+createdBy: copilot
+description: Implements API endpoints and connects server to the existing database.js
