@@ -4,12 +4,13 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
     vueDevTools(),
   ],
+  base: '/milk-tea-price/', // ⭐ 關鍵：加上這行，兩邊都要有斜線！
   server: {
     proxy: {
       '/api': {
