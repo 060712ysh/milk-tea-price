@@ -23,8 +23,8 @@ npm run build
 
 ### 2. 開發模式 (推薦)
 若要進行 Vue 前端開發並享有熱更新功能，請按照以下步驟啟動：
-1. **啟動前端 UI**: 開啟終端機執行 `npm run dev` (網頁將運行於 http://localhost:5173)
-2. **啟動後端 API**: 開啟另一個終端機執行 `npm run server` (伺服器將運行於 http://localhost:3000)
+1. **啟動後端伺服器**: 開啟終端機執行 `npm start` (伺服器將運行於 http://localhost:3000)
+2. **啟動前端 UI**: 開啟另一個終端機執行 `npm run dev` (網頁將運行於 http://localhost:5173)
 
 *註：開發模式下，前端會透過 Proxy 將 `/api` 請求轉發至 3000 埠後端。*
 
