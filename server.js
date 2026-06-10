@@ -8,7 +8,16 @@ const PORT = 3000;
 // 中介軟體
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
+// 優先提供 Vue 編譯後的靜態檔案，若無則提供原始 public 目錄
+const path = require("path");
+const fs = require("fs");
+const vueDistPath = path.join(__dirname, "vue", "dist");
+
+if (fs.existsSync(vueDistPath)) {
+    app.use(express.static(vueDistPath));
+} else {
+    app.use(express.static("public"));
+}
 
 // 測試 API
 app.get("/api/test", (req, res) => {

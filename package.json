@@ -1,4 +1,10 @@
 {
+  "scripts": {
+    "start": "node server.js",
+    "dev": "npm --prefix vue run dev",
+    "server": "node server.js",
+    "build": "npm --prefix vue install && npm --prefix vue run build"
+  },
   "dependencies": {
     "cors": "^2.8.6",
     "express": "^5.2.1",
